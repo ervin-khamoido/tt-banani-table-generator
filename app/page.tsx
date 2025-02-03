@@ -12,26 +12,29 @@ export default function Home() {
   const { continueConversation } = useActions();
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!input.trim()) return;
 
-    setLoading(true);
-    setConversation((current: ClientMessage[]) => [
-      ...current,
-      { id: generateId(), role: "user", display: input },
-    ]);
+      setLoading(true);
+      setConversation((current: ClientMessage[]) => [
+        ...current,
+        { id: generateId(), role: "user", display: input },
+      ]);
+      setInput("");
 
-    try {
-      const message = await continueConversation(input);
-      setConversation((current: ClientMessage[]) => [...current, message]);
-    } catch (error) {
-      console.error(error);
-    }
-
-    setInput("");
-    setLoading(false);
-  }, [ input, setConversation, continueConversation ]);
+      try {
+        const message = await continueConversation(input);
+        setConversation((current: ClientMessage[]) => [...current, message]);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [input, setConversation, continueConversation]
+  );
 
   return (
     <main className="max-w-4xl mx-auto p-6">
@@ -43,12 +46,12 @@ export default function Home() {
           disabled={loading}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Describe the table items you want to generate..."
-          className="w-full p-4 border rounded-lg resize-none h-32 focus:ring-2 focus:ring-blue-500"
+          className="w-full p-4 border rounded-lg resize-none h-32 focus:ring-2 focus:ring-blue-500 text-black"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="absolute bottom-4 right-4 bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="absolute bottom-4 right-4 bg-blue-500 text-white p-2 pr-3 pt-3 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           <Loader loading={loading} />
         </button>

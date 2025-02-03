@@ -1,20 +1,20 @@
-import { ReactNode } from 'react';
-import { z } from 'zod';
-import { openai } from '@ai-sdk/openai';
-import { generateId } from 'ai';
-import { getMutableAIState, streamUI } from 'ai/rsc';
-import { MATERIAL_SYMBOLS } from './lib/constants';
-import Table from './components/Table/Table';
+import { ReactNode } from "react";
+import { z } from "zod";
+import { openai } from "@ai-sdk/openai";
+import { generateId } from "ai";
+import { getMutableAIState, streamUI } from "ai/rsc";
+import { MATERIAL_SYMBOLS } from "./lib/constants";
+import Table from "./components/Table/Table";
 
 // Interfaces for message structures
 export interface ServerMessage {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 }
 
 export interface ClientMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   display: ReactNode;
 }
 
@@ -26,26 +26,25 @@ export interface ClientMessage {
  * 4. Provides a tool ("generateTableItems") to create table data on demand.
  * 5. Returns a ClientMessage with a component to display the result.
  */
-export async function continueConversation(userInput: string): Promise<ClientMessage> {
-  'use server'; // Mark this function as a server action (Next.js 13+).
+export async function continueConversation(
+  userInput: string
+): Promise<ClientMessage> {
+  "use server"; // Mark this function as a server action (Next.js 13+).
 
   const aiHistory = getMutableAIState();
 
   try {
     // Call the AI model and stream its response
     const streamedResult = await streamUI({
-      model: openai('gpt-4o-mini'),
-      messages: [
-        ...aiHistory.get(),
-        { role: 'user', content: userInput },
-      ],
+      model: openai("gpt-4o-mini"),
+      messages: [...aiHistory.get(), { role: "user", content: userInput }],
       // This function is called each time there's a chunk of streamed text.
       text: ({ content, done }) => {
         // When done, update the conversation history with the final assistant response.
         if (done) {
           aiHistory.done((messages: ServerMessage[]) => [
             ...messages,
-            { role: 'assistant', content },
+            { role: "assistant", content },
           ]);
         }
 
@@ -55,33 +54,35 @@ export async function continueConversation(userInput: string): Promise<ClientMes
       tools: {
         generateTableItems: {
           description:
-            'Generate table items based on user prompt. If no real data is available, use dummy data. Do not ask questions, just generate the items.',
+            "Generate table items based on user prompt. If no real data is available, use dummy data. Do not ask questions, just generate the items.",
           parameters: z.object({
             items: z.array(
               z.object({
-                cells: z.array(
-                  z.object({
-                    key: z.string().describe('Key of the column'),
-                    type: z
-                      .enum(['text', 'number', 'date', 'currency', 'action'])
-                      .describe('Type of the column'),
-                    icon: z
-                      .string()
-                      .optional()
-                      .describe(
-                        `Use the icon name from the Material Symbols list: ${MATERIAL_SYMBOLS.join(
-                          ', '
-                        )}. Only applicable for the main column.`
-                      ),
-                    value: z
-                      .union([z.string(), z.number()])
-                      .describe(
-                        'Value of the column. For actions, allowed values are "delete" or "select".'
-                      ),
-                  })
-                ).describe(
-                  'Key-value pairs for columns. Include "action" types only if the user prompt requires it.'
-                ),
+                cells: z
+                  .array(
+                    z.object({
+                      key: z.string().describe("Key of the column"),
+                      type: z
+                        .enum(["text", "number", "date", "currency", "action"])
+                        .describe("Type of the column"),
+                      icon: z
+                        .string()
+                        .optional()
+                        .describe(
+                          `Use the icon name from the Material Symbols list: ${MATERIAL_SYMBOLS.join(
+                            ", "
+                          )}. Only applicable for the main column.`
+                        ),
+                      value: z
+                        .union([z.string(), z.number()])
+                        .describe(
+                          'Value of the column. For actions, allowed values are "delete" or "select".'
+                        ),
+                    })
+                  )
+                  .describe(
+                    'Key-value pairs for columns. Include "action" types only if the user prompt requires it.'
+                  ),
               })
             ),
           }),
@@ -97,7 +98,10 @@ export async function continueConversation(userInput: string): Promise<ClientMes
             // Once done, store a message in the conversation history
             aiHistory.done((messages: ServerMessage[]) => [
               ...messages,
-              { role: 'assistant', content: `Generated ${items.length} table items` },
+              {
+                role: "assistant",
+                content: `Generated ${items.length} table items`,
+              },
             ]);
 
             // Return the actual Table component
@@ -110,7 +114,7 @@ export async function continueConversation(userInput: string): Promise<ClientMes
     // Return the streamed component wrapped in a ClientMessage
     return {
       id: generateId(),
-      role: 'assistant',
+      role: "assistant",
       display: streamedResult.value,
     };
   } catch (error) {
@@ -118,10 +122,8 @@ export async function continueConversation(userInput: string): Promise<ClientMes
     // In case of an error, return a basic error display
     return {
       id: generateId(),
-      role: 'assistant',
-      display: (
-        <div className="text-red-500">Error generating table items</div>
-      ),
+      role: "assistant",
+      display: <div className="text-red-500">Error generating table items</div>,
     };
   }
 }
