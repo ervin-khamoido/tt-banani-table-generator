@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { AI } from './ai';
+import { AI } from "./ai";
 
 import "./globals.css";
-
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -12,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <AI>

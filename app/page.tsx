@@ -1,24 +1,25 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useActions, useUIState } from 'ai/rsc';
-import { generateId } from 'ai';
-import { ClientMessage } from './actions';
+import { useCallback, useState } from "react";
+import { useActions, useUIState } from "ai/rsc";
+import { generateId } from "ai";
+import { ClientMessage } from "./actions";
+import { Loader, MessageBubbleList } from "./components";
 
 export default function Home() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [conversation, setConversation] = useUIState();
   const { continueConversation } = useActions();
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     setLoading(true);
     setConversation((current: ClientMessage[]) => [
       ...current,
-      { id: generateId(), role: 'user', display: input }
+      { id: generateId(), role: "user", display: input },
     ]);
 
     try {
@@ -28,21 +29,13 @@ export default function Home() {
       console.error(error);
     }
 
-    setInput('');
+    setInput("");
     setLoading(false);
-  };
+  }, [ input, setConversation, continueConversation ]);
 
   return (
     <main className="max-w-4xl mx-auto p-6">
-      <div className="space-y-4 mb-4">
-        {conversation.map((message: ClientMessage) => (
-          <div key={message.id} className={`p-4 rounded-lg ${
-            message.role === 'user' ? 'bg-blue-50 text-blue-500' : 'bg-gray-50 text-gray-500'
-          }`}>
-            {message.display}
-          </div>
-        ))}
-      </div>
+      <MessageBubbleList conversation={conversation} />
 
       <form onSubmit={handleSubmit} className="relative">
         <textarea
@@ -55,13 +48,9 @@ export default function Home() {
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="absolute bottom-4 right-4 bg-blue-500 text-white p-2 rounded-lg 
-                   hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="absolute bottom-4 right-4 bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
-          {loading ? 
-            <span className="material-symbols-outlined w-5 h-5 animate-spin">sync</span> : 
-            <span className="material-symbols-outlined w-5 h-5">arrow_upward</span>
-          }
+          <Loader loading={loading} />
         </button>
       </form>
     </main>

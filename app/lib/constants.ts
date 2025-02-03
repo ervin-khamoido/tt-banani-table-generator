@@ -1,4 +1,4 @@
-export const MATERIAL_SYMBOLS = [
+export const MATERIAL_SYMBOLS: string[] = [
     'add',
     'alternate_email',
     'bookmark',
